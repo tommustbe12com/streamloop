@@ -74,7 +74,7 @@ if /i "%start_stream%" NEQ "Y" (
 
 :: Start streaming using FFmpeg
 echo Starting stream to YouTube...
-ffmpeg -re -i "%video_file%" -c:v libx264 -preset veryfast -b:v %bitrate% -maxrate %bitrate% -bufsize %buffer_size% -r %fps% -g %fps% -f flv rtmp://a.rtmp.youtube.com/live2/%stream_key%
+ffmpeg -re -stream_loop -i "%video_file%" -c:v libx264 -preset veryfast -b:v %bitrate% -maxrate %bitrate% -bufsize %buffer_size% -r %fps% -g %fps% -f flv rtmp://a.rtmp.youtube.com/live2/%stream_key%
 
 :: End of script
 echo.
