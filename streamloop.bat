@@ -1,83 +1,53 @@
 @echo off
-:: Set text colors for a nice effect
 color 0A
+title YouTube 24/7 Stream Launcher
 
 :: Check if FFmpeg is installed
-ffmpeg -version >nul 2>nul
-IF %ERRORLEVEL% NEQ 0 (
+where ffmpeg >nul 2>&1
+if errorlevel 1 (
     echo.
-    echo FFmpeg is not installed. You can install it from:
-    echo.
-    echo https://ffmpeg.org/download.html
-    echo.
+    echo FFmpeg is not installed or not in PATH.
+    echo Download it from: https://www.gyan.dev/ffmpeg/builds/
+    echo Put ffmpeg.exe in the same folder or add to system PATH.
     pause
     exit /b
 )
 
-:: Displaying starting message
-cls
 echo.
-echo =======================
-echo YouTube Stream Automation
-echo =======================
-echo.
-echo Please enter the file path of the video you want to stream:
-set /p "video_file=File path (e.g., C:\path\to\video.mp4): "
-echo.
-
-echo Enter your YouTube stream key:
-set /p "stream_key=Stream Key: "
-echo.
-
-:: Set default values
-set fps=30
-set bitrate=4500k
-set buffer_size=9000k
-
-:: Ask if user wants to change FPS, Bitrate, or Buffer Size
-echo Do you want to customize the FPS (default: 30)? (Y/N)
-set /p "custom_fps="
-if /i "%custom_fps%"=="Y" (
-    set /p "fps=Enter desired FPS (e.g., 30, 60): "
-)
-
-echo Do you want to customize the Bitrate (default: 4500k)? (Y/N)
-set /p "custom_bitrate="
-if /i "%custom_bitrate%"=="Y" (
-    set /p "bitrate=Enter desired Bitrate (e.g., 4500k): "
-)
-
-echo Do you want to customize the Buffer Size (default: 9000k)? (Y/N)
-set /p "custom_buffer="
-if /i "%custom_buffer%"=="Y" (
-    set /p "buffer_size=Enter desired Buffer Size (e.g., 9000k): "
-)
-
-:: Display the chosen settings
-echo.
-echo You have selected the following settings:
-echo Video File: %video_file%
-echo Stream Key: %stream_key%
-echo FPS: %fps%
-echo Bitrate: %bitrate%
-echo Buffer Size: %buffer_size%
-echo.
-
-:: Confirm to start the stream
-echo Are you ready to start streaming? (Y/N)
-set /p "start_stream="
-if /i "%start_stream%" NEQ "Y" (
-    echo Stream cancelled.
+set /p videoPath=Enter path to video file to loop (e.g., C:\video.mp4): 
+if not exist "%videoPath%" (
+    echo.
+    echo File not found! Please check the path and try again.
     pause
     exit /b
 )
 
-:: Start streaming using FFmpeg
-echo Starting stream to YouTube...
-ffmpeg -re -stream_loop -i "%video_file%" -c:v libx264 -preset veryfast -b:v %bitrate% -maxrate %bitrate% -bufsize %buffer_size% -r %fps% -g %fps% -f flv rtmp://a.rtmp.youtube.com/live2/%stream_key%
-
-:: End of script
 echo.
-echo Streaming is complete. Press any key to exit.
-pause >nul
-exit
+set /p streamKey=Enter YouTube stream key: 
+if "%streamKey%"=="" (
+    echo No stream key entered.
+    pause
+    exit /b
+)
+
+echo.
+set /p forceFps=Enter target FPS (default: 30) [press Enter to skip]: 
+if "%forceFps%"=="" set forceFps=30
+
+echo.
+set /p bitrate=Enter video bitrate in kbps (default: 6000) [press Enter to skip]: 
+if "%bitrate%"=="" set bitrate=6000
+
+echo.
+set /p bufsize=Enter buffer size in kbps (default: 12000) [press Enter to skip]: 
+if "%bufsize%"=="" set bufsize=12000
+
+echo.
+echo Starting stream...
+echo Press Ctrl+C to stop.
+echo.
+
+:: Looping and streaming command
+ffmpeg -stream_loop -1 -re -i "%videoPath%" -c:v h264_nvenc -b:v %bitrate%k -bufsize %bufsize%k -maxrate %bitrate%k -g 60 -r %forceFps% -preset p3 -pix_fmt yuv420p -f flv "rtmp://a.rtmp.youtube.com/live2/%streamKey%"
+
+pause
